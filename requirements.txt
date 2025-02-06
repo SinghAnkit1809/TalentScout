@@ -1,0 +1,3 @@
+Gradio
+groq
+python-dotenv
