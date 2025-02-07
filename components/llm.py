@@ -29,7 +29,7 @@ class LLM:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            max_tokens=150,
+            max_tokens=500,
             temperature=0.7
         )
         assistant_message = response.choices[0].message.content.strip()
@@ -51,7 +51,7 @@ class LLM:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            max_tokens=300,
+            max_tokens=500,
             temperature=0.5
         )
         json_output = response.choices[0].message.content.strip()
