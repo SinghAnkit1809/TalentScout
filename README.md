@@ -26,7 +26,7 @@ TalentScout is a cutting-edge AI-powered hiring assistant designed to streamline
 
 ### Running the Application
 
-1. Run `python main.py` to launch the TalentScout application
+1. Run `python app.py` to launch the TalentScout application
 2. Interact with the chatbot by typing messages and responding to prompts
 3. The system will guide you through the interview process and provide a JSON output at the end
 
