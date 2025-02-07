@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+working.txt
 .env
 .venv
 .Python
@@ -25,6 +26,7 @@ wheels/
 share/python-wheels/
 *.egg-info/
 .installed.cfg
+main.py
 *.egg
 MANIFEST
 
