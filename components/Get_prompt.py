@@ -2,7 +2,8 @@ class SystemPrompt:
     def __init__(self):
         pass
 
-    def get_interview_prompt(self):
+    @staticmethod
+    def get_interview_prompt():
         # Updated prompt instructing the LLM to indicate when the interview is complete.
         return (
             "You are an AI Hiring Assistant for TalentScout. Your task is to conduct a comprehensive interview with the candidate."
@@ -17,8 +18,8 @@ class SystemPrompt:
             "Below is the conversation transcript so far. Continue the interview accordingly. "
             "Ask one question at a time in a professional way."
         )
-
-    def get_extraction_prompt(self):
+    @staticmethod
+    def get_extraction_prompt():
         # Prompt to extract candidate details as valid JSON.
         return (
             "You are an AI that extracts candidate information from an interview transcript. "
