@@ -1,48 +1,77 @@
 from groq import Groq
+from Get_prompt import SystemPrompt
 from dotenv import load_dotenv
 import os
+import json
+import uuid
+import re
+from datetime import datetime
 
 load_dotenv()
 
 class LLM:
     def __init__(self, query: str, history: list):
-        self.client = Groq(api_key=os.getenv('GROQ_URL'))
+        self.client = Groq(api_key=os.getenv('GROQ_API_KEY'))
         self.model = "llama-3.3-70b-versatile"
-        self.query = query  
-        self.history = history 
+        self.conversation_history = []  # Full transcript of the conversation
+        self.data_dir = "candidate_data"
+        os.makedirs(self.data_dir, exist_ok=True)
 
-    def call_llm(self):
-    # Define system prompt to guide the LLM's behavior
-        system_prompt = {
-    "role": "system",
-    "content": (
-        "You are an intelligent Hiring Assistant chatbot for 'TalentScout,' a recruitment agency specializing in technology placements. "
-        "Your purpose is to assist in the initial screening of candidates by gathering essential information such as their full name, contact details, years of experience, current location, and desired positions. "
-        "Additionally, you will prompt candidates to declare their tech stack, including programming languages, frameworks, databases, and tools they are proficient in. "
-        "Based on the declared tech stack, generate a tailored set of 3-5 relevant technical questions to assess the candidate’s proficiency. "
-        "Ensure the conversation remains context-aware, seamless, and engaging by maintaining a coherent flow and handling follow-up questions effectively. "
-        "Greet candidates upon initiation, briefly explain your purpose, and gracefully conclude conversations with a thank-you message and information about the next steps. "
-        "Provide meaningful responses when encountering unexpected inputs, ensuring the chatbot does not deviate from its intended purpose. "
-        "Your interactions should be professional, efficient, and optimized to handle a variety of technologies and frameworks while maintaining data privacy and security best practices."
-        "Ask one question at a time go step by step start with greeting once all the information is gathered ask for cross verify or user has miss something. while cross verify display user complete details"
-    )
-}
-
-        # Include the system prompt in the conversation history
-        messages = [system_prompt] + [
-            {"role": msg["role"], "content": msg["content"]} for msg in self.history
-        ]
-        
-        # Add the current user query
-        messages.append({"role": "user", "content": self.query})
-        
-        # Call the LLM with the updated message structure
+    def conduct_interview(self, user_message):
+        # Append candidate message to the conversation history.
+        self.conversation_history.append({"role": "user", "content": user_message})
+        # Build the prompt including instructions and conversation history.
+        prompt = self.get_interview_prompt() + "\n\nConversation Transcript:\n" + json.dumps(self.conversation_history, indent=2)
+        messages = [{"role": "system", "content": prompt}]
         response = self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            max_tokens=250,
-            temperature=0.7,
+            max_tokens=150,
+            temperature=0.7
         )
-        
-        return response.choices[0].message.content
+        assistant_message = response.choices[0].message.content.strip()
+        self.conversation_history.append({"role": "assistant", "content": assistant_message})
+
+        # If the assistant indicates interview completion, finalize automatically.
+        if ("interview complete" in assistant_message.lower() or 
+            "data will now be stored" in assistant_message.lower()):
+            final_message = self.finalize_interview()
+            self.conversation_history.append({"role": "assistant", "content": final_message})
+            return final_message
+
+        return assistant_message
+    
+    def finalize_interview(self):
+        # Build extraction prompt including the full conversation transcript.
+        prompt = self.get_extraction_prompt() + "\n\n" + json.dumps(self.conversation_history, indent=2)
+        messages = [{"role": "system", "content": prompt}]
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            max_tokens=300,
+            temperature=0.5
+        )
+        json_output = response.choices[0].message.content.strip()
+
+        # Attempt to extract a JSON object from the LLM output.
+        try:
+            json_str = re.search(r'(\{.*\})', json_output, re.DOTALL).group(1)
+            candidate_data = json.loads(json_str)
+        except Exception:
+            candidate_data = {"error": "Failed to parse JSON", "raw_output": json_output}
+
+        # Add candidate id and timestamp.
+        candidate_id = str(uuid.uuid4())
+        timestamp = datetime.now().isoformat()
+        candidate_data["candidate_id"] = candidate_id
+        candidate_data["timestamp"] = timestamp
+
+        # Save the data to a file.
+        filename = os.path.join(self.data_dir, f"{candidate_id}.json")
+        with open(filename, "w") as f:
+            json.dump(candidate_data, f, indent=2)
+
+        final_message = f"Interview finalized. Your Candidate ID is {candidate_id}."
+        return final_message
+
 

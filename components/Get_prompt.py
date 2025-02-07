@@ -1,4 +1,4 @@
-class prompt:
+class SystemPrompt:
     def __init__(self):
         pass
 
