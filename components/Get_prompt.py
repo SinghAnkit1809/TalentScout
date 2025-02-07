@@ -4,7 +4,7 @@ class SystemPrompt:
 
     @staticmethod
     def get_interview_prompt():
-        # Updated prompt instructing the LLM to indicate when the interview is complete.
+        # prompt to get interview data
         return (
             "You are an AI Hiring Assistant for TalentScout. Your task is to conduct a comprehensive interview with the candidate."
             "Start by greeting the candidate and your little self introduction."
@@ -20,7 +20,7 @@ class SystemPrompt:
         )
     @staticmethod
     def get_extraction_prompt():
-        # Prompt to extract candidate details as valid JSON.
+        # Prompt to convert interview data into json format
         return (
             "You are an AI that extracts candidate information from an interview transcript. "
             "From the transcript provided below, extract the following details: Full Name, Email Address, Phone Number, "
