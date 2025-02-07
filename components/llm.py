@@ -1,5 +1,5 @@
 from groq import Groq
-from Get_prompt import SystemPrompt
+from components.Get_prompt import SystemPrompt
 from dotenv import load_dotenv
 import os
 import json
@@ -10,7 +10,7 @@ from datetime import datetime
 load_dotenv()
 
 class LLM:
-    def __init__(self, query: str, history: list):
+    def __init__(self):
         self.client = Groq(api_key=os.getenv('GROQ_API_KEY'))
         self.model = "llama-3.3-70b-versatile"
         self.conversation_history = []  # Full transcript of the conversation
@@ -21,7 +21,7 @@ class LLM:
         # Append candidate message to the conversation history.
         self.conversation_history.append({"role": "user", "content": user_message})
         # Build the prompt including instructions and conversation history.
-        prompt = self.get_interview_prompt() + "\n\nConversation Transcript:\n" + json.dumps(self.conversation_history, indent=2)
+        prompt = SystemPrompt.get_interview_prompt() + "\n\nConversation Transcript:\n" + json.dumps(self.conversation_history, indent=2)
         messages = [{"role": "system", "content": prompt}]
         response = self.client.chat.completions.create(
             model=self.model,
@@ -43,7 +43,7 @@ class LLM:
     
     def finalize_interview(self):
         # Build extraction prompt including the full conversation transcript.
-        prompt = self.get_extraction_prompt() + "\n\n" + json.dumps(self.conversation_history, indent=2)
+        prompt = SystemPrompt.get_extraction_prompt() + "\n\n" + json.dumps(self.conversation_history, indent=2)
         messages = [{"role": "system", "content": prompt}]
         response = self.client.chat.completions.create(
             model=self.model,
